@@ -1,5 +1,20 @@
 {
   "dependencies": {
+    "secrets1": {
+      "type": "secrets"
+    },
+    "secrets2": {
+      "type": "secrets",
+      "connectionId": "VaultUri"
+    },
+    "cosmosdb1": {
+      "type": "cosmosdb",
+      "connectionId": "CosmosConString"
+    },
+    "storage2": {
+      "type": "storage",
+      "connectionId": "BlobConString"
+    },
     "appInsights1": {
       "type": "appInsights",
       "connectionId": "APPINSIGHTS_CONNECTIONSTRING"
