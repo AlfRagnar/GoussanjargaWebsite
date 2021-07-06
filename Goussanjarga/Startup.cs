@@ -1,6 +1,7 @@
 using Azure.Core.Extensions;
 using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -9,6 +10,8 @@ using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Identity.Web;
+using Microsoft.Identity.Web.UI;
 using System;
 
 namespace Goussanjarga
@@ -25,6 +28,9 @@ namespace Goussanjarga
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+                .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAd"));
+
             services.AddControllersWithViews(options =>
             {
                 var policy = new AuthorizationPolicyBuilder()
@@ -32,7 +38,8 @@ namespace Goussanjarga
                     .Build();
                 options.Filters.Add(new AuthorizeFilter(policy));
             });
-            services.AddRazorPages();
+            services.AddRazorPages()
+                .AddMicrosoftIdentityUI();
             services.AddAzureClients(builder =>
             {
                 builder.AddBlobServiceClient(Configuration["StorageConString:blob"], preferMsi: true);
@@ -54,6 +61,7 @@ namespace Goussanjarga
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
+
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 

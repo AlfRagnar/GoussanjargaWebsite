@@ -15,6 +15,9 @@
     "cosmosdb1": {
       "type": "cosmosdb",
       "connectionId": "CosmosConString"
+    },
+    "identityapp1": {
+      "type": "identityapp"
     }
   }
 }
