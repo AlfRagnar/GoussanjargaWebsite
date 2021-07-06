@@ -4,17 +4,9 @@
       "type": "secrets",
       "connectionId": "VaultUri"
     },
-    "secrets1": {
-      "type": "secrets",
-      "connectionId": null
-    },
     "storage1": {
       "type": "storage",
       "connectionId": "StorageConString"
-    },
-    "identityapp1": {
-      "type": "identityapp",
-      "connectionId": "AzureAD:ClientSecret"
     },
     "appInsights1": {
       "type": "appInsights",
