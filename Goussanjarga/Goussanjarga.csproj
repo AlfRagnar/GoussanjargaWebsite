@@ -9,7 +9,7 @@
     <Description>Goussanjarga Media is a website that hosts videos and include features such as video hosting and download and preview in the future.</Description>
     <RepositoryUrl>https://github.com/AlfRagnar/GoussanjargaWebsite</RepositoryUrl>
     <RepositoryType>GitHub</RepositoryType>
-    <PackageProjectUrl>https://www.goussanjarga.com</PackageProjectUrl>
+    <PackageProjectUrl>https://goussanmedia.com/</PackageProjectUrl>
     <ApplicationInsightsResourceId>/subscriptions/39ef4e8a-8579-402a-bcb0-fa3a4bbb8942/resourceGroups/GoussanMedia/providers/microsoft.insights/components/goussanmedia</ApplicationInsightsResourceId>
   </PropertyGroup>
 
@@ -26,14 +26,22 @@
     <PackageReference Include="Azure.Storage.Blobs" Version="12.9.1" />
     <PackageReference Include="Azure.Storage.Files.Shares" Version="12.7.0" />
     <PackageReference Include="Azure.Storage.Queues" Version="12.7.0" />
-    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.15.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="5.0.4" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="5.0.4" />
+    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.17.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="5.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="5.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="5.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="5.0.7" />
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.20.1" />
     <PackageReference Include="Microsoft.Azure.Services.AppAuthentication" Version="1.6.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="5.0.7">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Azure" Version="1.1.0" />
     <PackageReference Include="Microsoft.Identity.Web" Version="1.14.0" />
     <PackageReference Include="Microsoft.Identity.Web.UI" Version="1.14.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="5.0.2" />
   </ItemGroup>
 
 </Project>
