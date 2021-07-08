@@ -3,8 +3,10 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using Goussanjarga.Services;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
@@ -32,28 +34,31 @@ namespace Goussanjarga
             services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
                 .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAd"));
 
-            services.AddControllersWithViews();
+           
+            services.AddControllersWithViews(options =>
+            {
+                var policy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+                options.Filters.Add(new AuthorizeFilter(policy));
+            });
+
             services.AddSingleton<ICosmosDbService>(
-                InitializeCosmosClientInstanceAsync(
-                 Configuration.GetSection("CosmosDb"))
-                .GetAwaiter()
-                .GetResult()
-                );
-            //services.AddControllersWithViews(options =>
-            //{
-            //    var policy = new AuthorizationPolicyBuilder()
-            //        .RequireAuthenticatedUser()
-            //        .Build();
-            //    options.Filters.Add(new AuthorizeFilter(policy));
-            //});
+               InitializeCosmosClientInstanceAsync(
+                Configuration.GetSection("CosmosDb"))
+               .GetAwaiter()
+               .GetResult()
+               );
 
             services.AddRazorPages()
                 .AddMicrosoftIdentityUI();
+
             services.AddAzureClients(builder =>
             {
                 builder.AddBlobServiceClient(Configuration["StorageConString:blob"], preferMsi: true);
                 builder.AddQueueServiceClient(Configuration["StorageConString:queue"], preferMsi: true);
             });
+
             services.AddApplicationInsightsTelemetry(Configuration["APPINSIGHTS_CONNECTIONSTRING"]);
         }
 
@@ -70,7 +75,6 @@ namespace Goussanjarga
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
@@ -94,8 +98,8 @@ namespace Goussanjarga
             string containerName = configurationSection.GetSection("ContainerName").Value;
             string account = configurationSection.GetSection("Account").Value;
             string key = configurationSection.GetSection("Key").Value;
-            CosmosClient client = new CosmosClient(account, key);
-            CosmosDbService cosmosDbService = new CosmosDbService(client, databaseName, containerName);
+            CosmosClient client = new(account, key);
+            CosmosDbService cosmosDbService = new(client, databaseName, containerName);
             DatabaseResponse database = await client.CreateDatabaseIfNotExistsAsync(databaseName);
             await database.Database.CreateContainerIfNotExistsAsync(containerName, "/id");
 
