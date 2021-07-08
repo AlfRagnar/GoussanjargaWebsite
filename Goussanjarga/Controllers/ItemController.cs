@@ -20,6 +20,9 @@ namespace Goussanjarga.Controllers
         [ActionName("Index")]
         public async Task<IActionResult> Index()
         {
+            
+
+
             return View(await _cosmosDbService.GetItemsAsync("SELECT * FROM c"));
         }
 
