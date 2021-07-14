@@ -18,6 +18,10 @@
     "storage1": {
       "type": "storage",
       "connectionId": "StorageConString"
+    },
+    "mssql1": {
+      "type": "mssql",
+      "connectionId": "ConnectionStrings:GoussanjargaContextConnection"
     }
   }
 }

@@ -34,7 +34,6 @@ namespace Goussanjarga
             services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
                 .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAd"));
 
-           
             services.AddControllersWithViews(options =>
             {
                 var policy = new AuthorizationPolicyBuilder()
@@ -94,14 +93,21 @@ namespace Goussanjarga
 
         private static async Task<CosmosDbService> InitializeCosmosClientInstanceAsync(IConfigurationSection configurationSection)
         {
+            // Connection URL fetched from appsettings.json
+            string connectionString = configurationSection.GetSection("EndpointUri").Value;
+            // Define Azure Cosmos Db Client options like preferred operation region and Application Name
+            CosmosClientOptions options = new CosmosClientOptions
+            {
+                ApplicationName = "GoussanMedia",
+                ApplicationRegion = Regions.WestEurope
+            };
+            // Create the new Cosmos Db Client
+            CosmosClient cosmosClient = new CosmosClient(connectionString, options);
+            // Get the predefined Database name from appsettings.json
             string databaseName = configurationSection.GetSection("DatabaseName").Value;
-            string containerName = configurationSection.GetSection("ContainerName").Value;
-            string account = configurationSection.GetSection("Account").Value;
-            string key = configurationSection.GetSection("Key").Value;
-            CosmosClient client = new(account, key);
-            CosmosDbService cosmosDbService = new(client, databaseName, containerName);
-            DatabaseResponse database = await client.CreateDatabaseIfNotExistsAsync(databaseName);
-            await database.Database.CreateContainerIfNotExistsAsync(containerName, "/id");
+            // Initialize the client
+            CosmosDbService cosmosDbService = new CosmosDbService(cosmosClient, databaseName);
+            await cosmosDbService.CheckDatabase(databaseName);
 
             return cosmosDbService;
         }

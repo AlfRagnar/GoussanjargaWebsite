@@ -1,7 +1,9 @@
 ﻿using Goussanjarga.Models;
 using Goussanjarga.Services;
+using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos;
 using System;
 using System.Threading.Tasks;
 
@@ -11,19 +13,30 @@ namespace Goussanjarga.Controllers
     public class ItemController : Controller
     {
         private readonly ICosmosDbService _cosmosDbService;
+        private readonly Container _container;
+        private readonly TelemetryClient telemetryClient;
+        private readonly string containerName = "ToDoList";
 
-        public ItemController(ICosmosDbService cosmosDbService)
+        public ItemController(ICosmosDbService cosmosDbService, TelemetryClient telemetryClient)
         {
             _cosmosDbService = cosmosDbService;
+            _container = _cosmosDbService.GetContainer(containerName);
+            this.telemetryClient = telemetryClient;
         }
 
         [ActionName("Index")]
         public async Task<IActionResult> Index()
         {
-            
-
-
-            return View(await _cosmosDbService.GetItemsAsync("SELECT * FROM c"));
+            try
+            {
+                telemetryClient.TrackEvent("Current Container: " + _container.Id);
+                return View(await _cosmosDbService.GetItemsAsync("SELECT * FROM c", _container));
+            }
+            catch (CosmosException ex)
+            {
+                telemetryClient.TrackEvent("CosmosException: " + ex);
+                throw;
+            }
         }
 
         [ActionName("Create")]
@@ -40,7 +53,7 @@ namespace Goussanjarga.Controllers
             if (ModelState.IsValid)
             {
                 item.Id = Guid.NewGuid().ToString();
-                await _cosmosDbService.AddItemAsync(item);
+                await _cosmosDbService.AddItemAsync(item, _container);
                 return RedirectToAction("Index");
             }
 
@@ -54,7 +67,7 @@ namespace Goussanjarga.Controllers
         {
             if (ModelState.IsValid)
             {
-                await _cosmosDbService.UpdateItemAsync(item.Id, item);
+                await _cosmosDbService.UpdateItem(item.Id, item, _container);
                 return RedirectToAction("Index");
             }
 
@@ -68,8 +81,7 @@ namespace Goussanjarga.Controllers
             {
                 return BadRequest();
             }
-
-            Item item = await _cosmosDbService.GetItemAsync(id);
+            Item item = await _cosmosDbService.GetItemAsync(id, _container);
             if (item == null)
             {
                 return NotFound();
@@ -85,8 +97,7 @@ namespace Goussanjarga.Controllers
             {
                 return BadRequest();
             }
-
-            Item item = await _cosmosDbService.GetItemAsync(id);
+            Item item = await _cosmosDbService.GetItemAsync(id, _container);
             if (item == null)
             {
                 return NotFound();
@@ -98,16 +109,16 @@ namespace Goussanjarga.Controllers
         [HttpPost]
         [ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> DeleteConfirmedAsync([Bind("Id")] string id)
+        public async Task<ActionResult> DeleteConfirmedAsync([Bind("Id")] Item item)
         {
-            await _cosmosDbService.DeleteItemAsync(id);
+            await _cosmosDbService.DeleteItemAsync(item, _container);
             return RedirectToAction("Index");
         }
 
         [ActionName("Details")]
         public async Task<ActionResult> DetailsAsync(string id)
         {
-            return View(await _cosmosDbService.GetItemAsync(id));
+            return View(await _cosmosDbService.GetItemAsync(id, _container));
         }
     }
 }
