@@ -78,7 +78,20 @@ namespace Goussanjarga.Services
 
         public async Task DeleteFamilyAsync(Family family, Container container)
         {
-            await container.DeleteItemAsync<Family>(family.Id, new PartitionKey(family.Id));
+            try
+            {
+                await container.DeleteItemAsync<Family>(family.Id, new PartitionKey(family.LastName));
+            }
+            catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+            {
+                Trace.TraceError("Family not found");
+                throw;
+            }
+            catch (CosmosException ex)
+            {
+                Trace.TraceError("Cosmos Exception: " + ex);
+                throw;
+            }
         }
 
         public async Task<Item> GetItemAsync(string id, Container container)
