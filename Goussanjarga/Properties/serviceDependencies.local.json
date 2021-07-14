@@ -26,6 +26,10 @@
     },
     "identityapp1": {
       "type": "identityapp.aad"
+    },
+    "mssql1": {
+      "type": "mssql.local",
+      "connectionId": "ConnectionStrings:GoussanjargaContextConnection"
     }
   }
 }

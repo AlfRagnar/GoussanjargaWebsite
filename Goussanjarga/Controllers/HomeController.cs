@@ -1,7 +1,9 @@
 ﻿using Goussanjarga.Models;
+using Goussanjarga.Services;
+using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
+using Microsoft.Azure.Cosmos;
 using System.Diagnostics;
 
 namespace Goussanjarga.Controllers
@@ -9,11 +11,16 @@ namespace Goussanjarga.Controllers
     [AllowAnonymous]
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly ICosmosDbService _cosmosDbService;
+        private readonly Container _container;
+        private readonly TelemetryClient _telemetryClient;
+        private readonly string containerName = "User";
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ICosmosDbService cosmosDbService, TelemetryClient telemetryClient)
         {
-            _logger = logger;
+            _cosmosDbService = cosmosDbService;
+            _container = _cosmosDbService.GetContainer(containerName);
+            _telemetryClient = telemetryClient;
         }
 
         public IActionResult Index()
