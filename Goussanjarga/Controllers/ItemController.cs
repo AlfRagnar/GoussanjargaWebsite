@@ -116,11 +116,5 @@ namespace Goussanjarga.Controllers
             await _cosmosDbService.DeleteItemAsync(item, _container);
             return RedirectToAction("Index");
         }
-
-        [ActionName("Details")]
-        public async Task<ActionResult> DetailsAsync(string id)
-        {
-            return View(await _cosmosDbService.GetItemAsync(id, _container));
-        }
     }
 }
