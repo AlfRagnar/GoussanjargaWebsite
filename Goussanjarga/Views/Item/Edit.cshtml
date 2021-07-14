@@ -50,4 +50,6 @@
     @Html.ActionLink("Back to List", "Index")
 </div>
 
-<script src="~/bundles/jqueryval"></script>
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
