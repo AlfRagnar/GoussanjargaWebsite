@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Goussanjarga.Controllers
@@ -29,12 +30,13 @@ namespace Goussanjarga.Controllers
         {
             try
             {
-                telemetryClient.TrackEvent("Current Container: " + _container.Id);
-                return View(await _cosmosDbService.GetItemsAsync("SELECT * FROM c", _container));
+                telemetryClient.TrackTrace("Current Container: " + _container.Id);
+                IEnumerable<Item> item = await _cosmosDbService.GetItemsAsync("SELECT * FROM c", _container);
+                return View(item);
             }
             catch (CosmosException ex)
             {
-                telemetryClient.TrackEvent("CosmosException: " + ex);
+                telemetryClient.TrackException(ex);
                 throw;
             }
         }
