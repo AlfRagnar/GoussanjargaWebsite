@@ -59,15 +59,15 @@ namespace Goussanjarga.Controllers
         [HttpPost]
         [ActionName("Edit")]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> EditAsync([Bind("Id,LastName,Address,IsRegistered")] Family item)
+        public async Task<ActionResult> EditAsync([Bind("Id,LastName,Address,IsRegistered")] Family family)
         {
             if (ModelState.IsValid)
             {
-                await _cosmosDbService.UpdateFamily(item, _container);
+                await _cosmosDbService.UpdateFamily(family, _container);
                 return RedirectToAction("Index");
             }
 
-            return View(item);
+            return View(family);
         }
 
         [ActionName("Create")]
@@ -93,9 +93,32 @@ namespace Goussanjarga.Controllers
         }
 
         [ActionName("Delete")]
-        public IActionResult Delete(string id, string familyName)
+        public async Task<IActionResult> Delete(string id, string familyName)
         {
-            return View();
+            if (id == null || familyName == null)
+            {
+                return BadRequest();
+            }
+            Family family = await _cosmosDbService.GetFamilyAsync(id, familyName, _container);
+            if (family == null)
+            {
+                return NotFound();
+            }
+            return View(family);
+        }
+
+        [HttpPost]
+        [ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> DeleteConfirmed([Bind("Id,familyName")] string id, string familyName)
+        {
+            Family family = new()
+            {
+                Id = id,
+                LastName = familyName
+            };
+            await _cosmosDbService.DeleteFamilyAsync(family, _container);
+            return RedirectToAction("Index");
         }
 
         [HttpPost]

@@ -26,11 +26,6 @@ namespace Goussanjarga.Models
         public string FirstName { get; set; }
     }
 
-    public class Pet
-    {
-        public string GivenName { get; set; }
-    }
-
     public class Child
     {
         public string FamilyName { get; set; }
@@ -38,6 +33,11 @@ namespace Goussanjarga.Models
         public string Gender { get; set; }
         public int Grade { get; set; }
         public Pet[] Pets { get; set; }
+    }
+
+    public class Pet
+    {
+        public string GivenName { get; set; }
     }
 
     public class Address
