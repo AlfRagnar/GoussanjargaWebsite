@@ -49,17 +49,18 @@
           "contentVersion": "1.0.0.0",
           "resources": [
             {
-              "name": "goussan-cosmos",
-              "location": "[parameters('resourceLocation')]",
-              "type": "Microsoft.DocumentDB/databaseAccounts",
+              "apiVersion": "2015-04-08",
               "kind": "GlobalDocumentDB",
+              "location": "[parameters('resourceLocation')]",
+              "name": "goussan-cosmos",
+              "properties": {
+                "databaseAccountOfferType": "Standard",
+                "locations": [{"failoverPriority": 0}]
+              },
               "systemData": {
                 "createdAt": "2021-07-06T10:32:04.5068218Z"
               },
-              "properties": {
-                "databaseAccountOfferType": "Standard"
-              },
-              "apiVersion": "2015-04-08"
+              "type": "Microsoft.DocumentDB/databaseAccounts"
             }
           ]
         }

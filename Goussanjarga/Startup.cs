@@ -43,8 +43,7 @@ namespace Goussanjarga
             });
 
             services.AddSingleton<ICosmosDbService>(
-               InitializeCosmosClientInstanceAsync(
-                Configuration.GetSection("CosmosDb"))
+               InitializeCosmosClientInstanceAsync()
                .GetAwaiter()
                .GetResult()
                );
@@ -58,7 +57,7 @@ namespace Goussanjarga
                 builder.AddQueueServiceClient(Configuration["StorageConString:queue"], preferMsi: true);
             });
 
-            services.AddApplicationInsightsTelemetry(Configuration["APPINSIGHTS_CONNECTIONSTRING"]);
+            services.AddApplicationInsightsTelemetry(Configuration["AppInsightConString"]);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -91,10 +90,8 @@ namespace Goussanjarga
             });
         }
 
-        private static async Task<CosmosDbService> InitializeCosmosClientInstanceAsync(IConfigurationSection configurationSection)
+        private async Task<CosmosDbService> InitializeCosmosClientInstanceAsync()
         {
-            // Connection URL fetched from appsettings.json
-            string connectionString = configurationSection.GetSection("EndpointUri").Value;
             // Define Azure Cosmos Db Client options like preferred operation region and Application Name
             CosmosClientOptions options = new CosmosClientOptions
             {
@@ -102,16 +99,16 @@ namespace Goussanjarga
                 ApplicationRegion = Regions.WestEurope
             };
             // Create the new Cosmos Db Client
-            CosmosClient cosmosClient = new CosmosClient(connectionString, options);
+            CosmosClient cosmosClient = new CosmosClient(Configuration["CosmosConString"], options);
             // Get the predefined Database name from appsettings.json
-            string databaseName = configurationSection.GetSection("DatabaseName").Value;
+            string databaseName = Configuration["DatabaseName"];
             // Initialize the client
             CosmosDbService cosmosDbService = new CosmosDbService(cosmosClient, databaseName);
             await cosmosDbService.CheckDatabase(databaseName);
-
             return cosmosDbService;
         }
     }
+
 
     internal static class StartupExtensions
     {

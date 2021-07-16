@@ -49,12 +49,14 @@
           "contentVersion": "1.0.0.0",
           "resources": [
             {
-              "name": "goussanmedia",
-              "type": "microsoft.insights/components",
-              "location": "[parameters('resourceLocation')]",
+              "apiVersion": "2015-05-01",
               "kind": "web",
-              "properties": {},
-              "apiVersion": "2015-05-01"
+              "location": "[parameters('resourceLocation')]",
+              "name": "goussanmedia",
+              "properties": {
+                "Application_Type": "web"
+              },
+              "type": "microsoft.insights/components"
             }
           ]
         }
