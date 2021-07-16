@@ -19,7 +19,7 @@ namespace Goussanjarga.Services
 
         Task DeleteFamilyAsync(Family family, Container container);
 
-        Task UpdateItem(string id, Item item, Container container);
+        Task UpdateItem(Item item, Container container);
 
         Task UpdateFamily(Family family, Container container);
 

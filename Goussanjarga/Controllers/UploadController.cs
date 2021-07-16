@@ -1,7 +1,10 @@
 ﻿using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Goussanjarga.Services;
+using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos;
 using System;
 using System.Threading.Tasks;
 
@@ -9,6 +12,18 @@ namespace Goussanjarga.Controllers
 {
     public class UploadController : Controller
     {
+        private readonly ICosmosDbService _cosmosDbService;
+        private readonly Container _container;
+        private readonly TelemetryClient telemetryClient;
+        private readonly string containerName = "Videos";
+
+        public UploadController(ICosmosDbService cosmosDbService, TelemetryClient telemetryClient)
+        {
+            _cosmosDbService = cosmosDbService;
+            _container = _cosmosDbService.GetContainer(containerName);
+            this.telemetryClient = telemetryClient;
+        }
+
         public IActionResult Index()
         {
             return View();

@@ -9,14 +9,14 @@
     "appInsights1": {
       "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/microsoft.insights/components/goussanmedia",
       "type": "appInsights.azure",
-      "connectionId": "APPINSIGHTS_CONNECTIONSTRING",
-      "secretStore": "AzureAppSettings"
+      "connectionId": "AppInsightConString",
+      "secretStore": "AzureKeyVault"
     },
     "cosmosdb1": {
       "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.DocumentDB/databaseAccounts/goussan-cosmos",
       "type": "cosmosdb.azure",
       "connectionId": "CosmosConString",
-      "secretStore": "AzureAppSettings"
+      "secretStore": "AzureKeyVault"
     },
     "identityapp1": {
       "type": "identityapp.aad"
@@ -25,7 +25,7 @@
       "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Storage/storageAccounts/goussanmediastorage",
       "type": "storage.azure",
       "connectionId": "StorageConString",
-      "secretStore": "AzureAppSettings"
+      "secretStore": "AzureKeyVault"
     }
   }
 }

@@ -65,25 +65,24 @@ namespace Goussanjarga.Controllers
         [HttpPost]
         [ActionName("Edit")]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> EditAsync([Bind("Id,Name,Description,Completed")] Item item)
+        public async Task<ActionResult> EditConfirmed([Bind("Id,Name,Description,Completed")] Item item)
         {
             if (ModelState.IsValid)
             {
-                await _cosmosDbService.UpdateItem(item.Id, item, _container);
+                await _cosmosDbService.UpdateItem(item, _container);
                 return RedirectToAction("Index");
             }
-
-            return View(item);
+            return RedirectToAction("Index");
         }
 
         [ActionName("Edit")]
-        public async Task<ActionResult> EditAsync(string id)
+        public ActionResult Edit(Item item)
         {
-            if (id == null)
+            if (!ModelState.IsValid)
             {
                 return BadRequest();
             }
-            Item item = await _cosmosDbService.GetItemAsync(id, _container);
+            //Item item = await _cosmosDbService.GetItemAsync(id, _container);
             if (item == null)
             {
                 return NotFound();
@@ -93,13 +92,13 @@ namespace Goussanjarga.Controllers
         }
 
         [ActionName("Delete")]
-        public async Task<ActionResult> DeleteAsync(string id)
+        public ActionResult Delete(Item item)
         {
-            if (id == null)
+            if (!ModelState.IsValid)
             {
                 return BadRequest();
             }
-            Item item = await _cosmosDbService.GetItemAsync(id, _container);
+            //Item item = await _cosmosDbService.GetItemAsync(id, _container);
             if (item == null)
             {
                 return NotFound();

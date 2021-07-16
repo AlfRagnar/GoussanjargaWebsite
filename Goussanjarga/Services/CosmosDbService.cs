@@ -55,12 +55,6 @@ namespace Goussanjarga.Services
             return containerResponse;
         }
 
-        //public Container GetContainer(string containerName)
-        //{
-        //    Container container = _dbClient.GetContainer(containerName);
-        //    return container;
-        //}
-
         public async Task AddItemAsync(Item item, Container container)
         {
             await container.CreateItemAsync(item, new PartitionKey(item.Id));
@@ -142,9 +136,9 @@ namespace Goussanjarga.Services
             return results;
         }
 
-        public async Task UpdateItem(string id, Item item, Container container)
+        public async Task UpdateItem(Item item, Container container)
         {
-            await container.UpsertItemAsync(item, new PartitionKey(id));
+            await container.UpsertItemAsync(item, new PartitionKey(item.Id));
         }
 
         public async Task UpdateFamily(Family family, Container container)
