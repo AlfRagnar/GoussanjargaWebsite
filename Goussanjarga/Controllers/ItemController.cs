@@ -15,14 +15,14 @@ namespace Goussanjarga.Controllers
     {
         private readonly ICosmosDbService _cosmosDbService;
         private readonly Container _container;
-        private readonly TelemetryClient telemetryClient;
+        private readonly TelemetryClient _telemetryClient;
         private readonly string containerName = "ToDoList";
 
         public ItemController(ICosmosDbService cosmosDbService, TelemetryClient telemetryClient)
         {
             _cosmosDbService = cosmosDbService;
             _container = _cosmosDbService.GetContainer(containerName);
-            this.telemetryClient = telemetryClient;
+            _telemetryClient = telemetryClient;
         }
 
         [ActionName("Index")]
@@ -30,13 +30,13 @@ namespace Goussanjarga.Controllers
         {
             try
             {
-                telemetryClient.TrackTrace("Current Container: " + _container.Id);
-                IEnumerable<Item> item = await _cosmosDbService.GetItemsAsync("SELECT * FROM c", _container);
+                _telemetryClient.TrackTrace("Current Container: " + _container.Id);
+                IEnumerable<ToDoList> item = await _cosmosDbService.GetItemsAsync("SELECT * FROM c", _container);
                 return View(item);
             }
             catch (CosmosException ex)
             {
-                telemetryClient.TrackException(ex);
+                _telemetryClient.TrackException(ex);
                 throw;
             }
         }
@@ -50,7 +50,7 @@ namespace Goussanjarga.Controllers
         [HttpPost]
         [ActionName("Create")]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> CreateAsync([Bind("Id,Name,Description,Completed")] Item item)
+        public async Task<ActionResult> CreateAsync([Bind("Id,Name,Description,Completed")] ToDoList item)
         {
             if (ModelState.IsValid)
             {
@@ -62,10 +62,25 @@ namespace Goussanjarga.Controllers
             return View(item);
         }
 
+        
+
+        // Get the Item based on Item ID
+        [ActionName("Edit")]
+        public async Task<ActionResult> EditAsync(string id)
+        {
+
+            ToDoList item = await _cosmosDbService.GetItemAsync(id, _container);
+            if (item == null)
+            {
+                return NotFound();
+            }
+
+            return View(item);
+        }
         [HttpPost]
         [ActionName("Edit")]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> EditConfirmed([Bind("Id,Name,Description,Completed")] Item item)
+        public async Task<ActionResult> EditConfirmed([Bind("Id,Name,Description,Completed")] ToDoList item)
         {
             if (ModelState.IsValid)
             {
@@ -75,30 +90,12 @@ namespace Goussanjarga.Controllers
             return RedirectToAction("Index");
         }
 
-        [ActionName("Edit")]
-        public ActionResult Edit(Item item)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
-            //Item item = await _cosmosDbService.GetItemAsync(id, _container);
-            if (item == null)
-            {
-                return NotFound();
-            }
-
-            return View(item);
-        }
+        // Get the item object and return to view
 
         [ActionName("Delete")]
-        public ActionResult Delete(Item item)
+        public async Task<ActionResult> DeleteAsync(string id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
-            //Item item = await _cosmosDbService.GetItemAsync(id, _container);
+            ToDoList item = await _cosmosDbService.GetItemAsync(id, _container);
             if (item == null)
             {
                 return NotFound();
@@ -110,9 +107,9 @@ namespace Goussanjarga.Controllers
         [HttpPost]
         [ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> DeleteConfirmedAsync([Bind("Id")] Item item)
+        public async Task<ActionResult> DeleteConfirmedAsync([Bind("Id")] string id)
         {
-            await _cosmosDbService.DeleteItemAsync(item, _container);
+            await _cosmosDbService.DeleteItemAsync(id, _container);
             return RedirectToAction("Index");
         }
     }

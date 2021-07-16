@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Goussanjarga.Models.Item>
+﻿@model IEnumerable<Goussanjarga.Models.ToDoList>
 
 @{
     ViewBag.Title = "List of To-Do Items";
@@ -34,10 +34,10 @@
                 @Html.DisplayFor(modelItem => item.Completed)
             </td>
             <td>
-                @Html.ActionLink("Edit", "Edit", item)
+                @Html.ActionLink("Edit", "Edit", new { id = item.Id })
             </td>
             <td>
-                @Html.ActionLink("Delete", "Delete", item)
+                @Html.ActionLink("Delete", "Delete", new { id = item.Id })
             </td>
         </tr>
     }

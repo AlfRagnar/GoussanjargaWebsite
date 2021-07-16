@@ -2,7 +2,7 @@
 
 namespace Goussanjarga.Models
 {
-    public class Item
+    public class ToDoList
     {
         [JsonProperty(PropertyName = "id")]
         public string Id { get; set; }

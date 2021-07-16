@@ -8,35 +8,36 @@ namespace Goussanjarga.Services
 {
     public interface ICosmosDbService
     {
-        Task<Container> CreateContainer(string containerName, string partitionKeyPath);
-
         // CRUD OPERATIONS
-        Task AddItemAsync(Item item, Container container);
+        Task AddItemAsync(ToDoList item, Container container);
 
-        Task AddFamilyAsync(Family family, Container container);
+        Task AddFamilyAsync(Families family, Container container);
 
-        Task DeleteItemAsync(Item item, Container container);
+        Task DeleteItemAsync(string id, Container container);
 
-        Task DeleteFamilyAsync(Family family, Container container);
+        Task DeleteFamilyAsync(string id, string family, Container container);
 
-        Task UpdateItem(Item item, Container container);
+        Task UpdateItem(ToDoList item, Container container);
 
-        Task UpdateFamily(Family family, Container container);
+        Task<ItemResponse<Families>> UpdateFamily(Families family, Container container);
 
+        // META CRUD OPERATIONS
         Task<DatabaseResponse> CheckDatabase(string database);
 
-        Task<ContainerResponse> CheckContainer(string container, string partitionKey);
+        Task<ContainerResponse> CheckContainer(string containerName, string partitionKeyPath);
 
         // FETCH OPERATIONS
         Container GetContainer([Optional] string containerName);
 
-        Task<Item> GetItemAsync(string id, Container container);
+        Task<ToDoList> GetItemAsync(string id, Container container);
 
-        Task<Family> GetFamilyAsync(string familyId, string familyName, Container container);
+        Task<Families> GetFamilyAsync(string id, string familyName, Container container);
 
-        Task<IEnumerable<Item>> GetItemsAsync(string queryString, Container container);
+        Task<IEnumerable<ToDoList>> GetItemsAsync(string queryString, Container container);
 
-        Task<IEnumerable<Family>> GetFamiliesAsync(string queryString, Container container);
+        Task<IEnumerable<Families>> GetFamiliesAsync(string queryString, Container container);
+
+        Task<IEnumerable<Videos>> GetUploadsAsync(string queryString, Container container);
 
         Task ListContainersInDatabase();
     }
