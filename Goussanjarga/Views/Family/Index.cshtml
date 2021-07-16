@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Goussanjarga.Models.Family>
+﻿@model IEnumerable<Goussanjarga.Models.Families>
 
 @{
     ViewData["Title"] = "Index";
@@ -39,9 +39,9 @@
                     @Html.DisplayFor(modelItem => item.IsRegistered)
                 </td>
                 <td>
-                    @Html.ActionLink("Edit", "Edit", item) |
-                    @Html.ActionLink("Details", "Details", item) |
-                    @Html.ActionLink("Delete", "Delete", item)
+                    @Html.ActionLink("Edit", "Edit", new { id = item.Id, family = item.LastName }) |
+                    @Html.ActionLink("Details", "Details", new { id = item.Id, family = item.LastName }) |
+                    @Html.ActionLink("Delete", "Delete", new { id = item.Id, family = item.LastName })
                 </td>
             </tr>
         }

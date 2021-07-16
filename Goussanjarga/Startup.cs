@@ -15,6 +15,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Goussanjarga
@@ -104,11 +105,19 @@ namespace Goussanjarga
             string databaseName = Configuration["DatabaseName"];
             // Initialize the client
             CosmosDbService cosmosDbService = new CosmosDbService(cosmosClient, databaseName);
+            // Check if database exists
             await cosmosDbService.CheckDatabase(databaseName);
+            // Create necessary containers to store META data in
+            IEnumerable<IConfiguration> containerList = Configuration.GetSection("Containers").GetChildren();
+            foreach (IConfiguration item in containerList)
+            {
+                string containerName = item.GetSection("containerName").Value;
+                string paritionKeyPath = item.GetSection("paritionKeyPath").Value;
+                await cosmosDbService.CheckContainer(containerName, paritionKeyPath);
+            }
             return cosmosDbService;
         }
     }
-
 
     internal static class StartupExtensions
     {

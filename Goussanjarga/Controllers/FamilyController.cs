@@ -15,56 +15,29 @@ namespace Goussanjarga.Controllers
     {
         private readonly ICosmosDbService _cosmosDbService;
         private readonly Container _container;
-        private readonly TelemetryClient telemetryClient;
+        private readonly TelemetryClient _telemetryClient;
         private readonly string containerName = "Families";
 
         public FamilyController(ICosmosDbService cosmosDbService, TelemetryClient telemetryClient)
         {
             _cosmosDbService = cosmosDbService;
             _container = _cosmosDbService.GetContainer(containerName);
-            this.telemetryClient = telemetryClient;
+            _telemetryClient = telemetryClient;
         }
 
         public async Task<IActionResult> Index()
         {
             try
             {
-                telemetryClient.TrackTrace("Current Container: " + _container.Id);
-                IEnumerable<Family> families = await _cosmosDbService.GetFamiliesAsync("SELECT * FROM c", _container);
+                _telemetryClient.TrackTrace("Current Container: " + _container.Id);
+                IEnumerable<Families> families = await _cosmosDbService.GetFamiliesAsync("SELECT * FROM c", _container);
                 return View(families);
             }
             catch (CosmosException ex)
             {
-                telemetryClient.TrackException(ex);
+                _telemetryClient.TrackException(ex);
                 throw;
             }
-        }
-
-        [ActionName("Edit")]
-        public ActionResult Edit(Family family)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
-            if (family == null)
-            {
-                return NotFound();
-            }
-            return View(family);
-        }
-
-        [HttpPost]
-        [ActionName("Edit")]
-        [ValidateAntiForgeryToken]
-        public async Task<ActionResult> EditConfirmedAsync([Bind("Id,LastName,Address,IsRegistered")] Family family)
-        {
-            if (ModelState.IsValid)
-            {
-                await _cosmosDbService.UpdateFamily(family, _container);
-                return RedirectToAction("Index");
-            }
-            return View(family);
         }
 
         [ActionName("Create")]
@@ -73,55 +46,89 @@ namespace Goussanjarga.Controllers
             return View();
         }
 
-        [ActionName("Details")]
-        public IActionResult Details(Family family)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
-            if (family == null)
-            {
-                return NotFound();
-            }
-            return View(family);
-        }
-
-        [ActionName("Delete")]
-        public IActionResult Delete(Family family)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
-            if (family == null)
-            {
-                return NotFound();
-            }
-            return View(family);
-        }
-
-        [HttpPost]
-        [ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<ActionResult> DeleteConfirmed([Bind("Id,familyName")] Family family)
-        {
-            await _cosmosDbService.DeleteFamilyAsync(family, _container);
-            return RedirectToAction("Index");
-        }
-
         [HttpPost]
         [ActionName("Create")]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> CreateAsync([Bind("Id,LastName,Address,IsRegistered")] Family item)
+        public async Task<ActionResult> CreateAsync([Bind("Id,LastName,Address,IsRegistered")] Families family)
         {
             if (ModelState.IsValid)
             {
-                item.Id = Guid.NewGuid().ToString();
-                await _cosmosDbService.AddFamilyAsync(item, _container);
+                family.Id = Guid.NewGuid().ToString();
+                await _cosmosDbService.AddFamilyAsync(family, _container);
                 return RedirectToAction("Index");
             }
-            return View(item);
+            return View(family);
+        }
+
+        // Get the family object and return to View
+        [ActionName("Details")]
+        public async Task<IActionResult> DetailsAsync(string id, string family)
+        {
+            Families familyObject = await _cosmosDbService.GetFamilyAsync(id, family, _container);
+            if (familyObject == null)
+            {
+                return NotFound();
+            }
+            return View(familyObject);
+        }
+
+        // Get the Family object and return to View
+        [ActionName("Edit")]
+        public async Task<ActionResult> EditAsync(string id, string family)
+        {
+            Families familyObject = await _cosmosDbService.GetFamilyAsync(id, family, _container);
+
+            if (familyObject == null)
+            {
+                return NotFound();
+            }
+            return View(familyObject);
+        }
+
+        [HttpPost]
+        [ActionName("Edit")]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> EditConfirmedAsync(Families family)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var reponse = await _cosmosDbService.UpdateFamily(family, _container);
+                }
+                catch (CosmosException ex) when (ex.StatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    _telemetryClient.TrackException(ex);
+                    return BadRequest();
+                }
+                return RedirectToAction("Index");
+            }
+            return View(family);
+        }
+
+        // Get the family object and return to View
+        [ActionName("Delete")]
+        public async Task<IActionResult> DeleteAsync(string id, string family)
+        {
+            Families familyObject = await _cosmosDbService.GetFamilyAsync(id, family, _container);
+            if (familyObject == null)
+            {
+                return NotFound();
+            }
+            return View(familyObject);
+        }
+
+        [HttpPost]
+        [ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> DeleteConfirmed(string id, string family)
+        {
+            if (ModelState.IsValid && id != null)
+            {
+                await _cosmosDbService.DeleteFamilyAsync(id, family, _container);
+                return RedirectToAction("Index");
+            }
+            return View(family);
         }
     }
 }

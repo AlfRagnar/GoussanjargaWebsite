@@ -1,11 +1,13 @@
 ﻿using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Goussanjarga.Models;
 using Goussanjarga.Services;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Goussanjarga.Controllers
@@ -14,19 +16,29 @@ namespace Goussanjarga.Controllers
     {
         private readonly ICosmosDbService _cosmosDbService;
         private readonly Container _container;
-        private readonly TelemetryClient telemetryClient;
+        private readonly TelemetryClient _telemetryClient;
         private readonly string containerName = "Videos";
 
         public UploadController(ICosmosDbService cosmosDbService, TelemetryClient telemetryClient)
         {
             _cosmosDbService = cosmosDbService;
             _container = _cosmosDbService.GetContainer(containerName);
-            this.telemetryClient = telemetryClient;
+            _telemetryClient = telemetryClient;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> IndexAsync()
         {
-            return View();
+            try
+            {
+                _telemetryClient.TrackTrace("Current Container: " + _container.Id);
+                IEnumerable<Videos> uploads = await _cosmosDbService.GetUploadsAsync("SELECT * FROM c", _container);
+                return View(uploads);
+            }
+            catch (CosmosException ex)
+            {
+                _telemetryClient.TrackException(ex);
+                throw;
+            }
         }
 
         private static async Task ListContainers(BlobServiceClient blobServiceClient, string prefix, int? segmentSize)
@@ -34,11 +46,10 @@ namespace Goussanjarga.Controllers
             try
             {
                 // Call the listing operation and enumerate the result segment.
-                var resultSegment =
-                    blobServiceClient.GetBlobContainersAsync(BlobContainerTraits.Metadata, prefix, default)
+                IAsyncEnumerable<Page<BlobContainerItem>> asyncEnumerable = blobServiceClient
+                    .GetBlobContainersAsync(BlobContainerTraits.Metadata, prefix, default)
                     .AsPages(default, segmentSize);
-
-                await foreach (Page<BlobContainerItem> containerPage in resultSegment)
+                await foreach (Page<BlobContainerItem> containerPage in asyncEnumerable)
                 {
                     foreach (BlobContainerItem containerItem in containerPage.Values)
                     {

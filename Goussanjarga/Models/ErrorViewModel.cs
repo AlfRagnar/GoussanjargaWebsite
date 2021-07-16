@@ -1,5 +1,3 @@
-using System;
-
 namespace Goussanjarga.Models
 {
     public class ErrorViewModel

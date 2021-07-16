@@ -46,7 +46,7 @@ namespace Goussanjarga.Services
             return container;
         }
 
-        public async Task<Container> CreateContainer(string containerName, string partitionKeyPath)
+        public async Task<ContainerResponse> CheckContainer(string containerName, string partitionKeyPath)
         {
             ContainerResponse containerResponse = await _dbClient.CreateContainerIfNotExistsAsync(
                 id: containerName,
@@ -55,26 +55,26 @@ namespace Goussanjarga.Services
             return containerResponse;
         }
 
-        public async Task AddItemAsync(Item item, Container container)
+        public async Task AddItemAsync(ToDoList item, Container container)
         {
             await container.CreateItemAsync(item, new PartitionKey(item.Id));
         }
 
-        public async Task AddFamilyAsync(Family family, Container container)
+        public async Task AddFamilyAsync(Families family, Container container)
         {
             await container.CreateItemAsync(family, new PartitionKey(family.LastName));
         }
 
-        public async Task DeleteItemAsync(Item item, Container container)
+        public async Task DeleteItemAsync(string id, Container container)
         {
-            await container.DeleteItemAsync<Item>(item.Id, new PartitionKey(item.Id));
+            await container.DeleteItemAsync<ToDoList>(id, new PartitionKey(id));
         }
 
-        public async Task DeleteFamilyAsync(Family family, Container container)
+        public async Task DeleteFamilyAsync(string id,string family, Container container)
         {
             try
             {
-                await container.DeleteItemAsync<Family>(family.Id, new PartitionKey(family.LastName));
+                await container.DeleteItemAsync<Families>(id, new PartitionKey(family));
             }
             catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
             {
@@ -88,11 +88,11 @@ namespace Goussanjarga.Services
             }
         }
 
-        public async Task<Item> GetItemAsync(string id, Container container)
+        public async Task<ToDoList> GetItemAsync(string id, Container container)
         {
             try
             {
-                ItemResponse<Item> response = await container.ReadItemAsync<Item>(id, new PartitionKey(id));
+                ItemResponse<ToDoList> response = await container.ReadItemAsync<ToDoList>(id, new PartitionKey(id));
                 return response.Resource;
             }
             catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
@@ -101,11 +101,11 @@ namespace Goussanjarga.Services
             }
         }
 
-        public async Task<Family> GetFamilyAsync(string id, string familyName, Container container)
+        public async Task<Families> GetFamilyAsync(string id, string familyName, Container container)
         {
             try
             {
-                ItemResponse<Family> response = await container.ReadItemAsync<Family>(id, new PartitionKey(familyName));
+                ItemResponse<Families> response = await container.ReadItemAsync<Families>(id, new PartitionKey(familyName));
                 return response.Resource;
             }
             catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
@@ -114,48 +114,51 @@ namespace Goussanjarga.Services
             }
         }
 
-        public async Task<IEnumerable<Item>> GetItemsAsync(string queryString, Container container)
+        public async Task<IEnumerable<ToDoList>> GetItemsAsync(string queryString, Container container)
         {
-            var query = container.GetItemQueryIterator<Item>(new QueryDefinition(queryString));
-            List<Item> results = new();
+            FeedIterator<ToDoList> query = container.GetItemQueryIterator<ToDoList>(new QueryDefinition(queryString));
+            List<ToDoList> results = new();
             while (query.HasMoreResults)
             {
-                var response = await query.ReadNextAsync();
+                FeedResponse<ToDoList> response = await query.ReadNextAsync();
 
                 results.AddRange(response.ToList());
             }
-            Trace.WriteLine("Current Container: {0}", container.Id);
+            Trace.WriteLine("GET operation @ Container: {0}", container.Id);
             return results;
         }
 
-        public async Task<IEnumerable<Family>> GetFamiliesAsync(string queryString, Container container)
+        public async Task<IEnumerable<Families>> GetFamiliesAsync(string queryString, Container container)
         {
-            var query = container.GetItemLinqQueryable<Family>();
-            var iterator = query.ToFeedIterator();
-            var results = await iterator.ReadNextAsync();
+            IOrderedQueryable<Families> query = container.GetItemLinqQueryable<Families>();
+            FeedIterator<Families> iterator = query.ToFeedIterator();
+            FeedResponse<Families> results = await iterator.ReadNextAsync();
             return results;
         }
 
-        public async Task UpdateItem(Item item, Container container)
+        public async Task<IEnumerable<Videos>> GetUploadsAsync(string queryString, Container container)
+        {
+            IOrderedQueryable<Videos> query = container.GetItemLinqQueryable<Videos>();
+            FeedIterator<Videos> iterator = query.ToFeedIterator();
+            FeedResponse<Videos> results = await iterator.ReadNextAsync();
+            return results;
+        }
+
+        public async Task UpdateItem(ToDoList item, Container container)
         {
             await container.UpsertItemAsync(item, new PartitionKey(item.Id));
         }
 
-        public async Task UpdateFamily(Family family, Container container)
+        public async Task<ItemResponse<Families>> UpdateFamily(Families family, Container container)
         {
-            await container.UpsertItemAsync(family, new PartitionKey(family.LastName));
+            ItemResponse<Families> updateResponse = await container.UpsertItemAsync(family, new PartitionKey(family.LastName));
+            return updateResponse;
         }
 
         public async Task<DatabaseResponse> CheckDatabase(string database)
         {
             DatabaseResponse databaseResponse = await _client.CreateDatabaseIfNotExistsAsync(database);
             return databaseResponse;
-        }
-
-        public async Task<ContainerResponse> CheckContainer(string container, string partitionKey)
-        {
-            ContainerResponse containerResponse = await _dbClient.CreateContainerIfNotExistsAsync(container, partitionKey);
-            return containerResponse;
         }
 
         public async Task ListContainersInDatabase()
