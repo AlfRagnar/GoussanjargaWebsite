@@ -1,89 +1,119 @@
 ﻿using Goussanjarga.Models;
+using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace Goussanjarga.Services
 {
     public class CosmosDbService : ICosmosDbService
     {
-        private readonly Database _dbClient;
+        private readonly TelemetryClient _telemetryClient;
         private readonly CosmosClient _client;
+        private readonly Database _dbClient;
 
         public CosmosDbService(CosmosClient dbClient, string databaseName)
         {
-            {
-                _client = dbClient;
-                _dbClient = dbClient.GetDatabase(databaseName);
-            }
+            _client = dbClient;
+            _dbClient = dbClient.GetDatabase(databaseName);
         }
 
         // Set the container for when the service is ran
-        public Container GetContainer([Optional] string containerName)
+        public Container GetContainer(string containerName)
         {
-            Container container;
-            if (string.IsNullOrEmpty(containerName))
+            try
             {
-                try
-                {
-                    container = _dbClient.GetContainer("User");
-                }
-                catch (CosmosException NotFound)
-                {
-                    Trace.TraceError("Cosmos Exception: " + NotFound);
-                    throw;
-                }
+                Container container = _dbClient.GetContainer(containerName);
+                return container;
             }
-            else
+            catch (CosmosException ex)
             {
-                container = _dbClient.GetContainer(containerName);
+                _telemetryClient.TrackException(ex);
+                throw;
             }
-            return container;
         }
 
         public async Task<ContainerResponse> CheckContainer(string containerName, string partitionKeyPath)
         {
-            ContainerResponse containerResponse = await _dbClient.CreateContainerIfNotExistsAsync(
-                id: containerName,
-                partitionKeyPath: partitionKeyPath,
-                throughput: 400);
-            return containerResponse;
+            try
+            {
+                ContainerResponse containerResponse = await _dbClient.CreateContainerIfNotExistsAsync(
+               id: containerName,
+               partitionKeyPath: partitionKeyPath,
+               throughput: 400);
+                return containerResponse;
+            }
+            catch (CosmosException ex)
+            {
+                _telemetryClient.TrackException(ex);
+                throw;
+            }
         }
 
         public async Task AddItemAsync(ToDoList item, Container container)
         {
-            await container.CreateItemAsync(item, new PartitionKey(item.Id));
+            try
+            {
+                await container.CreateItemAsync(item, new PartitionKey(item.Id));
+            }
+            catch (CosmosException ex)
+            {
+                _telemetryClient.TrackException(ex);
+                throw;
+            }
         }
 
         public async Task AddFamilyAsync(Families family, Container container)
         {
-            await container.CreateItemAsync(family, new PartitionKey(family.LastName));
+            try
+            {
+                await container.CreateItemAsync(family, new PartitionKey(family.LastName));
+            }
+            catch (CosmosException ex)
+            {
+                _telemetryClient.TrackException(ex);
+                throw;
+            }
+        }
+
+        public async Task AddVideo(Videos videos, Container container)
+        {
+            try
+            {
+                await container.CreateItemAsync(videos, new PartitionKey(videos.User.Id));
+            }
+            catch (CosmosException ex)
+            {
+                _telemetryClient.TrackException(ex);
+                throw;
+            }
         }
 
         public async Task DeleteItemAsync(string id, Container container)
         {
-            await container.DeleteItemAsync<ToDoList>(id, new PartitionKey(id));
+            try
+            {
+                await container.DeleteItemAsync<ToDoList>(id, new PartitionKey(id));
+            }
+            catch (CosmosException ex)
+            {
+                _telemetryClient.TrackException(ex);
+                throw;
+            }
         }
 
-        public async Task DeleteFamilyAsync(string id,string family, Container container)
+        public async Task DeleteFamilyAsync(string id, string family, Container container)
         {
             try
             {
                 await container.DeleteItemAsync<Families>(id, new PartitionKey(family));
             }
-            catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
-            {
-                Trace.TraceError("Family not found");
-                throw;
-            }
             catch (CosmosException ex)
             {
-                Trace.TraceError("Cosmos Exception: " + ex);
+                _telemetryClient.TrackException(ex);
                 throw;
             }
         }
@@ -95,8 +125,9 @@ namespace Goussanjarga.Services
                 ItemResponse<ToDoList> response = await container.ReadItemAsync<ToDoList>(id, new PartitionKey(id));
                 return response.Resource;
             }
-            catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+            catch (CosmosException ex)
             {
+                _telemetryClient.TrackException(ex);
                 return null;
             }
         }
@@ -108,68 +139,125 @@ namespace Goussanjarga.Services
                 ItemResponse<Families> response = await container.ReadItemAsync<Families>(id, new PartitionKey(familyName));
                 return response.Resource;
             }
-            catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+            catch (CosmosException ex)
             {
+                _telemetryClient.TrackException(ex);
                 return null;
             }
         }
 
         public async Task<IEnumerable<ToDoList>> GetItemsAsync(string queryString, Container container)
         {
-            FeedIterator<ToDoList> query = container.GetItemQueryIterator<ToDoList>(new QueryDefinition(queryString));
-            List<ToDoList> results = new();
-            while (query.HasMoreResults)
+            try
             {
-                FeedResponse<ToDoList> response = await query.ReadNextAsync();
+                FeedIterator<ToDoList> query = container.GetItemQueryIterator<ToDoList>(new QueryDefinition(queryString));
+                List<ToDoList> results = new();
+                while (query.HasMoreResults)
+                {
+                    FeedResponse<ToDoList> response = await query.ReadNextAsync();
 
-                results.AddRange(response.ToList());
+                    results.AddRange(response.ToList());
+                }
+                Trace.WriteLine("GET operation @ Container: {0}", container.Id);
+                return results;
             }
-            Trace.WriteLine("GET operation @ Container: {0}", container.Id);
-            return results;
+            catch (CosmosException ex)
+            {
+                _telemetryClient.TrackException(ex);
+                throw;
+            }
         }
 
         public async Task<IEnumerable<Families>> GetFamiliesAsync(string queryString, Container container)
         {
-            IOrderedQueryable<Families> query = container.GetItemLinqQueryable<Families>();
-            FeedIterator<Families> iterator = query.ToFeedIterator();
-            FeedResponse<Families> results = await iterator.ReadNextAsync();
-            return results;
+            try
+            {
+                IOrderedQueryable<Families> query = container.GetItemLinqQueryable<Families>();
+                FeedIterator<Families> iterator = query.ToFeedIterator();
+                FeedResponse<Families> results = await iterator.ReadNextAsync();
+                return results;
+            }
+            catch (CosmosException ex)
+            {
+                _telemetryClient.TrackException(ex);
+                throw;
+            }
         }
 
         public async Task<IEnumerable<Videos>> GetUploadsAsync(string queryString, Container container)
         {
-            IOrderedQueryable<Videos> query = container.GetItemLinqQueryable<Videos>();
-            FeedIterator<Videos> iterator = query.ToFeedIterator();
-            FeedResponse<Videos> results = await iterator.ReadNextAsync();
-            return results;
+            try
+            {
+                IOrderedQueryable<Videos> query = container.GetItemLinqQueryable<Videos>();
+                FeedIterator<Videos> iterator = query.ToFeedIterator();
+                FeedResponse<Videos> results = await iterator.ReadNextAsync();
+                return results;
+            }
+            catch (CosmosException ex)
+            {
+                _telemetryClient.TrackException(ex);
+                throw;
+            }
         }
 
         public async Task UpdateItem(ToDoList item, Container container)
         {
-            await container.UpsertItemAsync(item, new PartitionKey(item.Id));
+            try
+            {
+                await container.UpsertItemAsync(item, new PartitionKey(item.Id));
+            }
+            catch (CosmosException ex)
+            {
+                _telemetryClient.TrackException(ex);
+                throw;
+            }
         }
 
         public async Task<ItemResponse<Families>> UpdateFamily(Families family, Container container)
         {
-            ItemResponse<Families> updateResponse = await container.UpsertItemAsync(family, new PartitionKey(family.LastName));
-            return updateResponse;
+            try
+            {
+                ItemResponse<Families> updateResponse = await container.UpsertItemAsync(family, new PartitionKey(family.LastName));
+                return updateResponse;
+            }
+            catch (CosmosException ex)
+            {
+                _telemetryClient.TrackException(ex);
+                throw;
+            }
         }
 
         public async Task<DatabaseResponse> CheckDatabase(string database)
         {
-            DatabaseResponse databaseResponse = await _client.CreateDatabaseIfNotExistsAsync(database);
-            return databaseResponse;
+            try
+            {
+                DatabaseResponse databaseResponse = await _client.CreateDatabaseIfNotExistsAsync(database);
+                return databaseResponse;
+            }
+            catch (CosmosException ex)
+            {
+                _telemetryClient.TrackException(ex);
+                throw;
+            }
         }
 
         public async Task ListContainersInDatabase()
         {
-            using FeedIterator<ContainerProperties> resultSetIterator = _dbClient.GetContainerQueryIterator<ContainerProperties>();
-            while (resultSetIterator.HasMoreResults)
+            try
             {
-                foreach (ContainerProperties container in await resultSetIterator.ReadNextAsync())
+                using FeedIterator<ContainerProperties> resultSetIterator = _dbClient.GetContainerQueryIterator<ContainerProperties>();
+                while (resultSetIterator.HasMoreResults)
                 {
-                    Trace.TraceInformation("Container name: " + container.Id);
+                    foreach (ContainerProperties container in await resultSetIterator.ReadNextAsync())
+                    {
+                        Trace.TraceInformation("Container name: " + container.Id);
+                    }
                 }
+            }
+            catch (CosmosException ex)
+            {
+                _telemetryClient.TrackException(ex);
+                throw;
             }
         }
     }

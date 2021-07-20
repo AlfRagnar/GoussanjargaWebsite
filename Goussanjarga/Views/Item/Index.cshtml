@@ -30,9 +30,20 @@
             <td>
                 @Html.DisplayFor(modelItem => item.Description)
             </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Completed)
-            </td>
+            @if (item.Completed)
+            {
+                <td style="background-color:red">
+                    @Html.DisplayFor(modelItem => item.Completed)
+                </td>
+
+            }
+            else
+            {
+                <td>
+                    @Html.DisplayFor(modelItem => item.Completed)
+                </td>
+
+            }
             <td>
                 @Html.ActionLink("Edit", "Edit", new { id = item.Id })
             </td>

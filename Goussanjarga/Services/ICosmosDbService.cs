@@ -1,7 +1,6 @@
 ﻿using Goussanjarga.Models;
 using Microsoft.Azure.Cosmos;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace Goussanjarga.Services
@@ -12,6 +11,8 @@ namespace Goussanjarga.Services
         Task AddItemAsync(ToDoList item, Container container);
 
         Task AddFamilyAsync(Families family, Container container);
+
+        Task AddVideo(Videos videos, Container container);
 
         Task DeleteItemAsync(string id, Container container);
 
@@ -27,7 +28,7 @@ namespace Goussanjarga.Services
         Task<ContainerResponse> CheckContainer(string containerName, string partitionKeyPath);
 
         // FETCH OPERATIONS
-        Container GetContainer([Optional] string containerName);
+        Container GetContainer(string containerName);
 
         Task<ToDoList> GetItemAsync(string id, Container container);
 

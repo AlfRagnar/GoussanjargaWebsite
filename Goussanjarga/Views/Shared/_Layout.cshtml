@@ -25,8 +25,11 @@
 
                         @if (User.Identity.IsAuthenticated)
                         {
+                            @*<li class="nav-item">
+                <a class="nav-link text-dark" asp-area="" asp-controller="Upload" asp-action="Index">Upload Files</a>
+            </li>*@
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Upload" asp-action="Index">Upload Files</a>
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Profile">Profile</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Item" asp-action="Index">Cosmos Todo List</a>
