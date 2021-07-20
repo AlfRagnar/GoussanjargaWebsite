@@ -29,7 +29,6 @@ namespace Goussanjarga.Controllers
         {
             try
             {
-                _telemetryClient.TrackTrace("Current Container: " + _container.Id);
                 IEnumerable<Families> families = await _cosmosDbService.GetFamiliesAsync("SELECT * FROM c", _container);
                 return View(families);
             }

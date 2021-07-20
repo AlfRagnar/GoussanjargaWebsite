@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Azure;
@@ -16,6 +17,7 @@ using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Goussanjarga
@@ -32,8 +34,26 @@ namespace Goussanjarga
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // Configure user consert for non-essential cookies
+            services.Configure<CookiePolicyOptions>(options =>
+            {
+                options.CheckConsentNeeded = context => true;
+                options.MinimumSameSitePolicy = SameSiteMode.Unspecified;
+                options.HandleSameSiteCookieCompatibility();
+            });
+
+            // Sign-in users with the Microsoft identity platform
+            string[] initialScopes = Configuration.GetValue<string>("DownstreamApi:Scopes")?.Split(' ');
             services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-                .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAd"));
+                .AddMicrosoftIdentityWebApp(Configuration)
+                .EnableTokenAcquisitionToCallDownstreamApi(initialScopes)
+                .AddMicrosoftGraph(Configuration.GetSection("DownstreamApi"))
+                .AddInMemoryTokenCaches();
+
+            services.Configure<MicrosoftIdentityOptions>(options =>
+            {
+                options.ClientSecret = Configuration["AppSecret"];
+            });
 
             services.AddControllersWithViews(options =>
             {
@@ -50,14 +70,16 @@ namespace Goussanjarga
                );
 
             services.AddRazorPages()
-                .AddMicrosoftIdentityUI();
+            .AddMicrosoftIdentityUI();
+            //services.AddSingleton<IBlobStorageService, BlobStorageService>();
+
+            services.AddServerSideBlazor().AddMicrosoftIdentityConsentHandler();
 
             services.AddAzureClients(builder =>
             {
                 builder.AddBlobServiceClient(Configuration["StorageConString:blob"], preferMsi: true);
                 builder.AddQueueServiceClient(Configuration["StorageConString:queue"], preferMsi: true);
             });
-
             services.AddApplicationInsightsTelemetry(Configuration["AppInsightConString"]);
         }
 
@@ -108,12 +130,16 @@ namespace Goussanjarga
             // Check if database exists
             await cosmosDbService.CheckDatabase(databaseName);
             // Create necessary containers to store META data in
-            IEnumerable<IConfiguration> containerList = Configuration.GetSection("Containers").GetChildren();
+            IEnumerable<IConfiguration> containerList = Configuration.GetSection("CosmosDb").GetSection("Containers").GetChildren();
             foreach (IConfiguration item in containerList)
             {
                 string containerName = item.GetSection("containerName").Value;
                 string paritionKeyPath = item.GetSection("paritionKeyPath").Value;
-                await cosmosDbService.CheckContainer(containerName, paritionKeyPath);
+                ContainerResponse containerResponse = await cosmosDbService.CheckContainer(containerName, paritionKeyPath);
+                if (containerResponse.StatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    Trace.WriteLine(containerResponse);
+                }
             }
             return cosmosDbService;
         }

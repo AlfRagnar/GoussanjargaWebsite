@@ -2,9 +2,9 @@
 
 namespace Goussanjarga.Models
 {
-    public class User
+    public class SiteUsers
     {
-        public Guid Id { get; set; }
+        public string Id { get; set; }
         public string DisplayName { get; set; }
         public string GivenName { get; set; }
         public string Surname { get; set; }

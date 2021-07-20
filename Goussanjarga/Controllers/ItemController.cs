@@ -30,7 +30,6 @@ namespace Goussanjarga.Controllers
         {
             try
             {
-                _telemetryClient.TrackTrace("Current Container: " + _container.Id);
                 IEnumerable<ToDoList> item = await _cosmosDbService.GetItemsAsync("SELECT * FROM c", _container);
                 return View(item);
             }
