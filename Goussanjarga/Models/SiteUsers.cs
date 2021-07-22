@@ -11,6 +11,6 @@ namespace Goussanjarga.Models
         public string DisplayName { get; set; }
         public string Mail { get; set; }
         public string UserPrincipalName { get; set; }
-        public ProfilePhoto ProfilePhoto { get; set; }
+        public string PhotoBase64 { get; set; }
     }
 }

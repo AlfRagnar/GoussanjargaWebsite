@@ -23,6 +23,7 @@ namespace Goussanjarga.Controllers
         private readonly TelemetryClient _telemetryClient;
         private readonly GraphServiceClient _graphServiceClient;
         private readonly MicrosoftIdentityConsentAndConditionalAccessHandler _consentHandler;
+        private readonly string _userId;
 
         public ItemController(ICosmosDbService cosmosDbService, TelemetryClient telemetryClient, MicrosoftIdentityConsentAndConditionalAccessHandler consentHandler, GraphServiceClient graphServiceClient)
         {
@@ -31,15 +32,52 @@ namespace Goussanjarga.Controllers
             _telemetryClient = telemetryClient;
             _consentHandler = consentHandler;
             _graphServiceClient = graphServiceClient;
+            _userId = GetUserID().GetAwaiter().GetResult();
+        }
+
+        [AuthorizeForScopes(ScopeKeySection = "DownstreamApi:Scopes")]
+        private async Task<string> GetUserID()
+        {
+            Microsoft.Graph.User currentUser = null;
+            try
+            {
+                currentUser = await _graphServiceClient.Me.Request().GetAsync();
+            }
+            // Catch CAE exception from Graph SDK
+            catch (ServiceException svcex) when (svcex.Message.Contains("Continuous access evaluation resulted in claims challenge"))
+            {
+                try
+                {
+                    string claimChallenge = WwwAuthenticateParameters.GetClaimChallengeFromResponseHeaders(svcex.ResponseHeaders);
+                    _consentHandler.ChallengeUser(_graphScopes, claimChallenge);
+                    try
+                    {
+                        currentUser = await _graphServiceClient.Me.Request().GetAsync();
+                    }
+                    catch (Exception ex3)
+                    {
+                        _telemetryClient.TrackException(ex3);
+                        _consentHandler.HandleException(ex3);
+                    }
+                }
+                catch (Exception ex2)
+                {
+                    _telemetryClient.TrackException(ex2);
+                    _consentHandler.HandleException(ex2);
+                }
+            }
+            return currentUser.Id;
         }
 
         [ActionName("Index")]
+        [AuthorizeForScopes(ScopeKeySection = "DownstreamApi:Scopes")]
         public async Task<IActionResult> Index()
         {
             try
             {
-                IEnumerable<ToDoList> item = await _cosmosDbService.GetItemsAsync("SELECT * FROM c", _container);
-                return View(item);
+                IEnumerable<ToDoList> myList = await _cosmosDbService.GetMyItems(_userId, _container);
+                //IEnumerable<ToDoList> item = await _cosmosDbService.GetItemsAsync("SELECT * FROM c WHERE(c.UserId = @userId)", _container);
+                return View(myList);
             }
             catch (CosmosException ex)
             {
@@ -60,29 +98,29 @@ namespace Goussanjarga.Controllers
         [AuthorizeForScopes(ScopeKeySection = "DownstreamApi:Scopes")]
         public async Task<ActionResult> CreateAsync([Bind("Name,Description,Completed")] ToDoList item)
         {
-            Microsoft.Graph.User currentUser = null;
-            try
-            {
-                currentUser = await _graphServiceClient.Me.Request().GetAsync();
-            }
-            // Catch CAE exception from Graph SDK
-            catch (ServiceException svcex) when (svcex.Message.Contains("Continuous access evaluation resulted in claims challenge"))
-            {
-                try
-                {
-                    _telemetryClient.TrackException(svcex);
-                    string claimChallenge = WwwAuthenticateParameters.GetClaimChallengeFromResponseHeaders(svcex.ResponseHeaders);
-                    _consentHandler.ChallengeUser(_graphScopes, claimChallenge);
-                    return new EmptyResult();
-                }
-                catch (Exception ex2)
-                {
-                    _telemetryClient.TrackException(ex2);
-                    _consentHandler.HandleException(ex2);
-                }
-            }
+            //Microsoft.Graph.User currentUser = null;
+            //try
+            //{
+            //    currentUser = await _graphServiceClient.Me.Request().GetAsync();
+            //}
+            //// Catch CAE exception from Graph SDK
+            //catch (ServiceException svcex) when (svcex.Message.Contains("Continuous access evaluation resulted in claims challenge"))
+            //{
+            //    try
+            //    {
+            //        _telemetryClient.TrackException(svcex);
+            //        string claimChallenge = WwwAuthenticateParameters.GetClaimChallengeFromResponseHeaders(svcex.ResponseHeaders);
+            //        _consentHandler.ChallengeUser(_graphScopes, claimChallenge);
+            //        return new EmptyResult();
+            //    }
+            //    catch (Exception ex2)
+            //    {
+            //        _telemetryClient.TrackException(ex2);
+            //        _consentHandler.HandleException(ex2);
+            //    }
+            //}
 
-            item.UserId = currentUser.Id;
+            item.UserId = _userId;
             item.Id = Guid.NewGuid().ToString();
             try
             {

@@ -109,7 +109,7 @@ namespace Goussanjarga.Services
             }
         }
 
-        public async Task<ToDoList> GetItemAsync(string id,string userId, Container container)
+        public async Task<ToDoList> GetItemAsync(string id, string userId, Container container)
         {
             try
             {
@@ -133,6 +133,30 @@ namespace Goussanjarga.Services
             {
                 return null;
             }
+        }
+
+        public async Task<List<ToDoList>> GetMyItems(string userId, Container container)
+        {
+            List<ToDoList> MyList = new();
+            using (FeedIterator<ToDoList> results = container.GetItemQueryIterator<ToDoList>(
+                queryDefinition: null,
+                requestOptions: new QueryRequestOptions()
+                {
+                    PartitionKey = new PartitionKey(userId)
+                }))
+            {
+                while (results.HasMoreResults)
+                {
+                    FeedResponse<ToDoList> response = await results.ReadNextAsync();
+                    if (response.Diagnostics != null)
+                    {
+                        Console.WriteLine($" Diagnostics {response.Diagnostics}");
+                    }
+
+                    MyList.AddRange(response);
+                }
+            }
+            return MyList;
         }
 
         public async Task<IEnumerable<ToDoList>> GetItemsAsync(string queryString, Container container)
