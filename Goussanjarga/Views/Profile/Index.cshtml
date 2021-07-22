@@ -1,0 +1,80 @@
+﻿@model Microsoft.Graph.User
+@{
+    ViewData["Title"] = "User Profile fetched from MS Graph";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<br />
+<br />
+<h1>Signed-in user's Profile</h1>
+
+@if (Model != null && Model.Id != null)
+{
+    <table class="table table-striped table-condensed" style="font-family: monospace" border="1">
+        <thead>
+            <tr>
+                <th>
+                    Profile picture
+                </th>
+                <th>
+                    @{
+                        if (Model.Photo != null)
+                        {
+                            <img style="margin: 5px 0; width: @Model.Photo.Width" src="data:image/jpeg;, @Model.Photo" />
+                        }
+                        else
+                        {
+                            <p>No Pic available for this user. Upload a pic for this user in the Azure portal</p>
+                        }
+                    }
+                </th>
+                <th></th>
+            </tr>
+            @{
+                <tr>
+                    <th>
+                        ID
+                    </th>
+                    <th>
+                        @Model.Id
+                    </th>
+                    <th></th>
+                </tr>
+                <tr>
+                    <th>
+                        Display Name
+                    </th>
+                    <th>
+                        @Model.DisplayName
+                    </th>
+                    <th></th>
+                </tr>
+                <tr>
+                    <th>
+                        Mail
+                    </th>
+                    <th>
+                        @Model.Mail
+                    </th>
+                    <th></th>
+                </tr>
+                <tr>
+                    <th>
+                        UserPrincipalName
+                    </th>
+                    <th>
+                        @Model.UserPrincipalName
+                    </th>
+                    <th></th>
+                </tr>
+            }
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+}
+else
+{
+    <div>
+        No Profile Data Available
+    </div>
+}

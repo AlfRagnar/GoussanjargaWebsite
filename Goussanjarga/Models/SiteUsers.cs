@@ -1,15 +1,16 @@
-﻿using System;
+﻿using Microsoft.Graph;
+using Newtonsoft.Json;
 
 namespace Goussanjarga.Models
 {
     public class SiteUsers
     {
-        public string Id { get; set; }
+        [JsonProperty(PropertyName = "id")]
+        public string id { get; set; }
+
         public string DisplayName { get; set; }
-        public string GivenName { get; set; }
-        public string Surname { get; set; }
-        public string UserPrincipalName { get; set; }
-        public string MobilePhone { get; set; }
         public string Mail { get; set; }
+        public string UserPrincipalName { get; set; }
+        public ProfilePhoto ProfilePhoto { get; set; }
     }
 }

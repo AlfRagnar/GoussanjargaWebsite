@@ -13,10 +13,10 @@ namespace Goussanjarga.Controllers
     [Authorize]
     public class FamilyController : Controller
     {
+        private readonly string containerName = "Families";
         private readonly ICosmosDbService _cosmosDbService;
         private readonly Container _container;
         private readonly TelemetryClient _telemetryClient;
-        private readonly string containerName = "Families";
 
         public FamilyController(ICosmosDbService cosmosDbService, TelemetryClient telemetryClient)
         {

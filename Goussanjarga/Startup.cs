@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using System.Net;
 
 namespace Goussanjarga
 {
@@ -130,13 +131,13 @@ namespace Goussanjarga
             // Check if database exists
             await cosmosDbService.CheckDatabase(databaseName);
             // Create necessary containers to store META data in
-            IEnumerable<IConfiguration> containerList = Configuration.GetSection("CosmosDb").GetSection("Containers").GetChildren();
+            IEnumerable<IConfiguration> containerList = Configuration.GetSection("Containers").GetChildren();
             foreach (IConfiguration item in containerList)
             {
                 string containerName = item.GetSection("containerName").Value;
                 string paritionKeyPath = item.GetSection("paritionKeyPath").Value;
                 ContainerResponse containerResponse = await cosmosDbService.CheckContainer(containerName, paritionKeyPath);
-                if (containerResponse.StatusCode != System.Net.HttpStatusCode.OK)
+                if (containerResponse.StatusCode != HttpStatusCode.OK)
                 {
                     Trace.WriteLine(containerResponse);
                 }
