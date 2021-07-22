@@ -1,9 +1,8 @@
 ﻿using Goussanjarga.Models;
-using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -11,7 +10,6 @@ namespace Goussanjarga.Services
 {
     public class CosmosDbService : ICosmosDbService
     {
-        private readonly TelemetryClient _telemetryClient;
         private readonly CosmosClient _client;
         private readonly Database _dbClient;
 
@@ -29,9 +27,8 @@ namespace Goussanjarga.Services
                 Container container = _dbClient.GetContainer(containerName);
                 return container;
             }
-            catch (CosmosException ex)
+            catch (CosmosException)
             {
-                _telemetryClient.TrackException(ex);
                 throw;
             }
         }
@@ -46,9 +43,8 @@ namespace Goussanjarga.Services
                throughput: 400);
                 return containerResponse;
             }
-            catch (CosmosException ex)
+            catch (CosmosException)
             {
-                _telemetryClient.TrackException(ex);
                 throw;
             }
         }
@@ -57,11 +53,10 @@ namespace Goussanjarga.Services
         {
             try
             {
-                await container.CreateItemAsync(item, new PartitionKey(item.Id));
+                await container.CreateItemAsync(item, new PartitionKey(item.UserId));
             }
-            catch (CosmosException ex)
+            catch (CosmosException)
             {
-                _telemetryClient.TrackException(ex);
                 throw;
             }
         }
@@ -72,9 +67,8 @@ namespace Goussanjarga.Services
             {
                 await container.CreateItemAsync(family, new PartitionKey(family.LastName));
             }
-            catch (CosmosException ex)
+            catch (CosmosException)
             {
-                _telemetryClient.TrackException(ex);
                 throw;
             }
         }
@@ -83,24 +77,22 @@ namespace Goussanjarga.Services
         {
             try
             {
-                await container.CreateItemAsync(videos, new PartitionKey(videos.User.Id));
+                await container.CreateItemAsync(videos, new PartitionKey(videos.User.id));
             }
-            catch (CosmosException ex)
+            catch (CosmosException)
             {
-                _telemetryClient.TrackException(ex);
                 throw;
             }
         }
 
-        public async Task DeleteItemAsync(string id, Container container)
+        public async Task DeleteItemAsync(string id, string userId, Container container)
         {
             try
             {
-                await container.DeleteItemAsync<ToDoList>(id, new PartitionKey(id));
+                await container.DeleteItemAsync<ToDoList>(id, new PartitionKey(userId));
             }
-            catch (CosmosException ex)
+            catch (CosmosException)
             {
-                _telemetryClient.TrackException(ex);
                 throw;
             }
         }
@@ -111,23 +103,21 @@ namespace Goussanjarga.Services
             {
                 await container.DeleteItemAsync<Families>(id, new PartitionKey(family));
             }
-            catch (CosmosException ex)
+            catch (CosmosException)
             {
-                _telemetryClient.TrackException(ex);
                 throw;
             }
         }
 
-        public async Task<ToDoList> GetItemAsync(string id, Container container)
+        public async Task<ToDoList> GetItemAsync(string id,string userId, Container container)
         {
             try
             {
-                ItemResponse<ToDoList> response = await container.ReadItemAsync<ToDoList>(id, new PartitionKey(id));
+                ItemResponse<ToDoList> response = await container.ReadItemAsync<ToDoList>(id, new PartitionKey(userId));
                 return response.Resource;
             }
             catch (CosmosException ex)
             {
-                _telemetryClient.TrackException(ex);
                 return null;
             }
         }
@@ -139,9 +129,8 @@ namespace Goussanjarga.Services
                 ItemResponse<Families> response = await container.ReadItemAsync<Families>(id, new PartitionKey(familyName));
                 return response.Resource;
             }
-            catch (CosmosException ex)
+            catch (CosmosException)
             {
-                _telemetryClient.TrackException(ex);
                 return null;
             }
         }
@@ -158,12 +147,10 @@ namespace Goussanjarga.Services
 
                     results.AddRange(response.ToList());
                 }
-                Trace.WriteLine("GET operation @ Container: {0}", container.Id);
                 return results;
             }
-            catch (CosmosException ex)
+            catch (CosmosException)
             {
-                _telemetryClient.TrackException(ex);
                 throw;
             }
         }
@@ -177,9 +164,8 @@ namespace Goussanjarga.Services
                 FeedResponse<Families> results = await iterator.ReadNextAsync();
                 return results;
             }
-            catch (CosmosException ex)
+            catch (CosmosException)
             {
-                _telemetryClient.TrackException(ex);
                 throw;
             }
         }
@@ -193,9 +179,8 @@ namespace Goussanjarga.Services
                 FeedResponse<Videos> results = await iterator.ReadNextAsync();
                 return results;
             }
-            catch (CosmosException ex)
+            catch (CosmosException)
             {
-                _telemetryClient.TrackException(ex);
                 throw;
             }
         }
@@ -204,11 +189,10 @@ namespace Goussanjarga.Services
         {
             try
             {
-                await container.UpsertItemAsync(item, new PartitionKey(item.Id));
+                await container.UpsertItemAsync(item, new PartitionKey(item.UserId));
             }
-            catch (CosmosException ex)
+            catch (CosmosException)
             {
-                _telemetryClient.TrackException(ex);
                 throw;
             }
         }
@@ -220,9 +204,8 @@ namespace Goussanjarga.Services
                 ItemResponse<Families> updateResponse = await container.UpsertItemAsync(family, new PartitionKey(family.LastName));
                 return updateResponse;
             }
-            catch (CosmosException ex)
+            catch (CosmosException)
             {
-                _telemetryClient.TrackException(ex);
                 throw;
             }
         }
@@ -234,31 +217,41 @@ namespace Goussanjarga.Services
                 DatabaseResponse databaseResponse = await _client.CreateDatabaseIfNotExistsAsync(database);
                 return databaseResponse;
             }
-            catch (CosmosException ex)
+            catch (CosmosException)
             {
-                _telemetryClient.TrackException(ex);
                 throw;
             }
         }
 
-        public async Task ListContainersInDatabase()
+        public async Task AddUser(SiteUsers siteUsers, Container container)
         {
             try
             {
-                using FeedIterator<ContainerProperties> resultSetIterator = _dbClient.GetContainerQueryIterator<ContainerProperties>();
-                while (resultSetIterator.HasMoreResults)
-                {
-                    foreach (ContainerProperties container in await resultSetIterator.ReadNextAsync())
-                    {
-                        Trace.TraceInformation("Container name: " + container.Id);
-                    }
-                }
+                await container.CreateItemAsync(siteUsers, new PartitionKey(siteUsers.id));
             }
-            catch (CosmosException ex)
+            catch (CosmosException)
             {
-                _telemetryClient.TrackException(ex);
                 throw;
             }
+        }
+
+        public async Task<SiteUsers> GetUser(string id, Container container)
+        {
+            try
+            {
+                ItemResponse<SiteUsers> response = await container.ReadItemAsync<SiteUsers>(id, new PartitionKey(id));
+                return response.Resource;
+            }
+            catch (CosmosException)
+            {
+                SiteUsers siteUsers = new();
+                return siteUsers;
+            }
+        }
+
+        public Task ListContainersInDatabase()
+        {
+            throw new NotImplementedException();
         }
     }
 }

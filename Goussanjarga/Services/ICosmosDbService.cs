@@ -14,7 +14,9 @@ namespace Goussanjarga.Services
 
         Task AddVideo(Videos videos, Container container);
 
-        Task DeleteItemAsync(string id, Container container);
+        Task AddUser(SiteUsers siteUsers, Container container);
+
+        Task DeleteItemAsync(string id, string userId, Container container);
 
         Task DeleteFamilyAsync(string id, string family, Container container);
 
@@ -30,9 +32,10 @@ namespace Goussanjarga.Services
         // FETCH OPERATIONS
         Container GetContainer(string containerName);
 
-        Task<ToDoList> GetItemAsync(string id, Container container);
+        Task<ToDoList> GetItemAsync(string id, string userId, Container container);
 
         Task<Families> GetFamilyAsync(string id, string familyName, Container container);
+        Task<SiteUsers> GetUser(string id, Container container);
 
         Task<IEnumerable<ToDoList>> GetItemsAsync(string queryString, Container container);
 

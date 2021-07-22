@@ -45,10 +45,11 @@
 
             }
             <td>
-                @Html.ActionLink("Edit", "Edit", new { id = item.Id })
+                <a asp-action="Edit" asp-route-id="@item.Id" asp-route-userId="@item.UserId">Edit</a>
             </td>
+
             <td>
-                @Html.ActionLink("Delete", "Delete", new { id = item.Id })
+                <a asp-action="Delete" asp-route-id="@item.Id" asp-route-userId="@item.UserId">Delete</a>
             </td>
         </tr>
     }
