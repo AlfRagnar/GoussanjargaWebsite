@@ -2,14 +2,11 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Goussanjarga.Models;
-using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -225,100 +222,6 @@ namespace Goussanjarga.Services.Data
                 }
             }
             return streamingEndpoint;
-        }
-
-        // Download the results from specified output asset, JUST TEST not going for local file storage
-        public async Task DownloadOutputAssetAsync(string assetName)
-        {
-            var currentDir = Directory.GetCurrentDirectory();
-
-            // Use Media service and Storage APIs to download the output file to a local folder
-            AssetContainerSas assetContainerSas = _azMediaServices.Assets.ListContainerSas(
-                resourceGroupName,
-                accountName,
-                assetName,
-                permissions: AssetContainerPermission.Read,
-                expiryTime: DateTime.UtcNow.AddHours(1).ToUniversalTime());
-
-            Uri containerSasUrl = new(assetContainerSas.AssetContainerSasUrls.FirstOrDefault());
-            BlobContainerClient container = new(containerSasUrl);
-
-            string directory = Path.Combine(currentDir, assetName);
-            Directory.CreateDirectory(directory);
-            Trace.WriteLine("Downloading resulst to {0}", directory);
-
-            string continuationToken = null;
-
-            // Call the listing operation and enumerate the result segment
-            // When the continuation token is empty, the last segment has been returned and execution can exit the loop
-            do
-            {
-                var resultSegment = container.GetBlobs().AsPages(continuationToken);
-
-                foreach (Azure.Page<BlobItem> blobPage in resultSegment)
-                {
-                    foreach (BlobItem blobItem in blobPage.Values)
-                    {
-                        var blobClient = container.GetBlobClient(blobItem.Name);
-                        string fileName = Path.Combine(directory, blobItem.Name);
-                        await blobClient.DownloadToAsync(fileName);
-                    }
-
-                    // Get the continuation token and loop until it is empty
-                    continuationToken = blobPage.ContinuationToken;
-                }
-            } while (continuationToken != "");
-
-            Trace.WriteLine("Download complete.");
-        }
-
-        // Fetch the stream URLs currently available
-        public async Task<IList<string>> OldGetStreamingUrlsAsync(string locatorName)
-        {
-            const string DefaultStreamingEndpointName = "default";
-
-            IList<string> streamingUrls = new List<string>();
-
-            StreamingEndpoint streamingEndpoint = await _azMediaServices.StreamingEndpoints.GetAsync(resourceGroupName, accountName, DefaultStreamingEndpointName);
-
-            if (streamingEndpoint != null)
-            {
-                if (streamingEndpoint.ResourceState != StreamingEndpointResourceState.Running)
-                {
-                    await _azMediaServices.StreamingEndpoints.StartAsync(resourceGroupName, accountName, DefaultStreamingEndpointName);
-                }
-            }
-
-            ListPathsResponse paths = await _azMediaServices.StreamingLocators.ListPathsAsync(resourceGroupName, accountName, locatorName);
-
-            foreach (StreamingPath path in paths.StreamingPaths)
-            {
-                UriBuilder uriBuilder = new()
-                {
-                    Scheme = "https",
-                    Host = streamingEndpoint.HostName,
-                    Path = path.Paths[0]
-                };
-                streamingUrls.Add(uriBuilder.ToString());
-            }
-
-            return streamingUrls;
-        }
-
-        // Run to clean up resources created if/when needed
-        public async Task CleanUpAsync(string transformName, string jobName, List<string> assetNames, string contentKeyPolicyName = null)
-        {
-            await _azMediaServices.Jobs.DeleteAsync(resourceGroupName, accountName, transformName, jobName);
-
-            foreach (var assetName in assetNames)
-            {
-                await _azMediaServices.Assets.DeleteAsync(resourceGroupName, accountName, assetName);
-            }
-
-            if (contentKeyPolicyName != null)
-            {
-                _azMediaServices.ContentKeyPolicies.Delete(resourceGroupName, accountName, contentKeyPolicyName);
-            }
         }
     }
 }

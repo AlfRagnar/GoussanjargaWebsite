@@ -1,6 +1,6 @@
 ﻿@model UploadVideosVM
 @{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Upload";
 }
 
 <div class="row">
@@ -32,7 +32,3 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }
-
-<p class="btn">
-    @Html.ActionLink("Create New", "Create")
-</p>

@@ -57,7 +57,7 @@ namespace Goussanjarga.Controllers
             return RedirectToAction("Index", "Upload");
         }
 
-        public async Task<IActionResult> Delete(string Id)
+        public async Task<RedirectToActionResult> Delete(string Id)
         {
             try
             {
