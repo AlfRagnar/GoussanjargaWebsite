@@ -1,8 +1,22 @@
-﻿@{
+﻿@model IEnumerable<Goussanjarga.Models.Videos>
+@{
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container">
+    @foreach (var video in Model)
+    {
+        <div class="card" style="width:680px;">
+            <div class="card-header">
+                <video id="azuremediaplayer" class="azuremediaplayer amp-default-skin amp-big-play-centered" controls width="640" height="400" poster="" data-setup='{}' tabindex="0">
+                    <source src="@video.StreamingUrl.Last()" type="application/vnd.ms-sstr+xml" />
+                    <p class="amp-no-js">To view this video please enable JavaScript, and consider upgrading to a web browser that supports HTML5 video</p>
+                </video>
+            </div>
+            <h5 class="card-title">@video.Title </h5>
+            <p class="card-text">@video.Description </p>
+            <a asp-action="Edit" asp-controller="Video" class="btn btn-outline-secondary">Edit</a>
+            <a asp-action="Delete" asp-controller="Video" class="btn btn-outline-danger">Delete</a>
+        </div>
+    }
 </div>

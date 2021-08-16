@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Goussanjarga.Models
 {
-    public class Videos
+    public class UploadVideos
     {
         [JsonProperty(PropertyName = "id")]
         public string Id { get; set; }
@@ -47,5 +47,7 @@ namespace Goussanjarga.Models
 
         [JsonProperty(PropertyName = "status")]
         public string Status { get; set; }
+
+
     }
 }

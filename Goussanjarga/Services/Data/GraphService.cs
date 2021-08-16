@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Goussanjarga.Services
+namespace Goussanjarga.Services.Data
 {
     public class GraphService : IGraphService
     {

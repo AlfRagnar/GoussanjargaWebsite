@@ -1,16 +1,42 @@
 ﻿using Goussanjarga.Models;
+using Goussanjarga.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace Goussanjarga.Controllers
 {
     [AllowAnonymous]
     public class HomeController : Controller
     {
-        public IActionResult Index()
+        private readonly ICosmosDbService cosmosDb;
+        private readonly IAzMediaService azMedia;
+        private Container Container => cosmosDb.GetContainer(Config.CosmosVideos);
+
+        public HomeController(ICosmosDbService cosmosDb, IAzMediaService azMedia)
         {
-            return View();
+            this.cosmosDb = cosmosDb;
+            this.azMedia = azMedia;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            IEnumerable<Videos> streamingVideos = await cosmosDb.GetStreamingVideosAsync(Container);
+            if(streamingVideos != null)
+            {
+                foreach(var video in streamingVideos)
+                {
+                    var listStreaming = await azMedia.GetStreamingURL(video.Locator);
+                    if(listStreaming != null)
+                    {
+                        video.StreamingUrl = listStreaming;
+                    }
+                }
+            }
+            return View(streamingVideos);
         }
 
         public IActionResult Privacy()

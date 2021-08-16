@@ -1,0 +1,41 @@
+﻿@model IEnumerable<Goussanjarga.Models.Videos>
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div>
+    <a class="btn btn-primary" asp-action="Upload">Upload New File</a>
+</div>
+
+<table style="width:100%" class="table table-striped">
+    <thead>
+        <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Title</th>
+            <th scope="col">Filename</th>
+            <th scope="col">Extension</th>
+            <th scope="col">Upload Date</th>
+            <th scope="col">Last Modified</th>
+            <th scope="col">Status</th>
+            <th scope="col"></th>
+        </tr>
+    </thead>
+    @foreach (var video in Model)
+    {
+        <tr>
+            <th scope="row">@video.Id</th>
+            <td>@video.Title</td>
+            <td>@video.FileName</td>
+            <td>@video.Extension</td>
+            <td>@video.UploadDate</td>
+            <td>@video.LastModified</td>
+            <td>@video.Status</td>
+            <td>
+                <div class="btn-group" role="group">
+                    <a class="btn btn-outline-primary" asp-action="Edit">Edit</a>
+                    <a class="btn btn-outline-danger" asp-action="Delete" asp-route-id="@video.Id">Delete</a>
+                </div>
+            </td>
+        </tr>
+    }
+</table>

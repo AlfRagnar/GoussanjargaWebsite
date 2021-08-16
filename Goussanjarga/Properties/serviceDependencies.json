@@ -12,9 +12,6 @@
       "type": "cosmosdb",
       "connectionId": "CosmosConString"
     },
-    "identityapp1": {
-      "type": "identityapp"
-    },
     "storage1": {
       "type": "storage",
       "connectionId": "StorageConString"

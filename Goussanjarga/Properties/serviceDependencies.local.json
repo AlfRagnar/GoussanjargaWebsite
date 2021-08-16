@@ -23,9 +23,6 @@
       "type": "cosmosdb.azure",
       "connectionId": "CosmosConString",
       "secretStore": "AzureKeyVault"
-    },
-    "identityapp1": {
-      "type": "identityapp.aad"
     }
   }
 }
