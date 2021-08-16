@@ -18,6 +18,9 @@
       "connectionId": "CosmosConString",
       "secretStore": "AzureKeyVault"
     },
+    "identityapp1": {
+      "type": "identityapp.aad"
+    },
     "storage1": {
       "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Storage/storageAccounts/goussanmediastorage",
       "type": "storage.azure",

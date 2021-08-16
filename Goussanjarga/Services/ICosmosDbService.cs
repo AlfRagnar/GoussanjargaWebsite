@@ -8,6 +8,7 @@ namespace Goussanjarga.Services
     public interface ICosmosDbService
     {
         // CRUD OPERATIONS
+        Task AddItemAsync(ToDoList item, Container container);
 
         Task AddVideoAsync(Videos video, Container container);
 
@@ -33,5 +34,6 @@ namespace Goussanjarga.Services
 
         Task<IEnumerable<Videos>> GetStreamingVideosAsync(Container container);
 
+        Task ListContainersInDatabase();
     }
 }

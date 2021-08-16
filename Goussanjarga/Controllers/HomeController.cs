@@ -31,7 +31,7 @@ namespace Goussanjarga.Controllers
                 {
                     var listStreaming = await azMedia.GetStreamingURL(video.Locator);
                     if(listStreaming != null)
-                    {
+        {
                         video.StreamingUrl = listStreaming;
                     }
                 }
