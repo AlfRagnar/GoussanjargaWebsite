@@ -6,8 +6,6 @@ using Goussanjarga.Services;
 using Goussanjarga.Services.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Management.Media;
 using Microsoft.Extensions.Azure;
@@ -15,13 +13,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Identity.Client;
-using Microsoft.Identity.Web;
 using Microsoft.Rest;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading.Tasks;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace Goussanjarga
@@ -56,14 +50,6 @@ namespace Goussanjarga
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            // Configure user consert for non-essential cookies
-            services.Configure<CookiePolicyOptions>(options =>
-            {
-                options.CheckConsentNeeded = context => true;
-                options.MinimumSameSitePolicy = SameSiteMode.Unspecified;
-                options.HandleSameSiteCookieCompatibility();
-            });
-
             services.AddControllersWithViews();
 
             services.AddSingleton<ICosmosDbService>(InitializeCosmosClientInstanceAsync().GetAwaiter().GetResult());
@@ -71,14 +57,6 @@ namespace Goussanjarga
             services.AddSingleton<IAzMediaService>(InitializeMediaService().GetAwaiter().GetResult());
 
             services.AddRazorPages();
-
-            //services.AddServerSideBlazor().AddMicrosoftIdentityConsentHandler();
-
-            services.AddRazorPages()
-            .AddMicrosoftIdentityUI();
-            //services.AddSingleton<IBlobStorageService, BlobStorageService>();
-
-            services.AddServerSideBlazor().AddMicrosoftIdentityConsentHandler();
 
             services.AddAzureClients(builder =>
             {
@@ -106,8 +84,6 @@ namespace Goussanjarga
 
             app.UseRouting();
 
-            app.UseAuthentication();
-            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
@@ -146,7 +122,7 @@ namespace Goussanjarga
         }
 
         private static BlobStorageService InitializeStorageClientInstance()
-                {
+        {
             // Create the new Blob Service Client
             BlobServiceClient blobService = new(Config.AzureStorageConnectionString);
             // Get the predefined Container name from Config
@@ -154,7 +130,7 @@ namespace Goussanjarga
             // Initialize the client
             BlobStorageService storageService = new(blobService, container);
             return storageService;
-                }
+        }
 
         private static async Task<AzMediaService> InitializeMediaService()
         {
@@ -171,7 +147,7 @@ namespace Goussanjarga
             _ = await azMediaService.GetOrCreateTransformAsync();
 
             return azMediaService;
-            }
+        }
 
         private static async Task<ServiceClientCredentials> GetCredentialsAsync()
         {

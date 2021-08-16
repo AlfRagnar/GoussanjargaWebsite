@@ -96,8 +96,6 @@ namespace Goussanjarga.Services.Data
             }
         }
 
-        
-
         public async Task<IEnumerable<Videos>> GetStreamingVideosAsync(Container container)
         {
             try
